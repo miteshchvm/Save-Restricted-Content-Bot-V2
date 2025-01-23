@@ -43,6 +43,10 @@ async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, m
         await get_msg(userbot, user_id, msg_id, link, retry_count, message)
         await asyncio.sleep(15)
         return True
+    except FloodWait as fw:
+        print(f"FloodWaitError: Waiting for {fw.x} seconds")
+        await asyncio.sleep(fw.x)
+        return False
     except AttributeError as e:
         if "'NoneType' object has no attribute 'get_chat'" in str(e):
             print(f"Error occurred while processing message: {e}")
