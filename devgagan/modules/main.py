@@ -38,6 +38,9 @@ batch_mode = {}
 
 async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, message):
     try:
+        if not message.text.strip():
+            print(f"Skipping empty message: {message.message_id}")
+            return
         await get_msg(userbot, user_id, msg_id, link, retry_count, message)
         await asyncio.sleep(15)
     finally:
