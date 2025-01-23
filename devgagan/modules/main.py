@@ -39,16 +39,17 @@ async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, m
     try:
         if not message.text.strip():
             print(f"Skipping empty message: {message.message_id}")
-            return
+            return False
         await get_msg(userbot, user_id, msg_id, link, retry_count, message)
         await asyncio.sleep(15)
+        return True
     except AttributeError as e:
         if "'NoneType' object has no attribute 'get_chat'" in str(e):
             print(f"Error occurred while processing message: {e}")
-            return
+            return False
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return
+        return False
     finally:
         pass
 
@@ -92,7 +93,6 @@ async def single_link(_, message):
     if user_id in batch_mode:
         return
     
-    # Check if the user is already in the loop
     if users_loop.get(user_id, False):
         await message.reply(
             "You already have an ongoing process. Please wait for it to finish or cancel it with /cancel."
@@ -104,13 +104,11 @@ async def single_link(_, message):
         await message.reply("Freemium service is currently not available. Upgrade to premium for access.")
         return
     
-    # Call the set_interval function to handle the cooldown
     can_proceed, response_message = await check_interval(user_id, freecheck)
     if not can_proceed:
         await message.reply(response_message)
         return
         
-    # Add the user to the loop
     users_loop[user_id] = True
     
     if "tg://openmessage" in message.text:
@@ -125,7 +123,6 @@ async def single_link(_, message):
             users_loop[user_id] = False
             return
     
-        
         msg = await message.reply("Processing...")
         
         if 't.me/' in link and 't.me/+' not in link and 't.me/c/' not in link and 't.me/b/' not in link and 'tg://openmessage' not in link:
@@ -147,8 +144,9 @@ async def single_link(_, message):
             else:
                 userbot = None
                 
-            await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
-            await set_interval(user_id, interval_minutes=45)
+            success = await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
+            if success:
+                await set_interval(user_id, interval_minutes=45)
             users_loop[user_id] = False
             return
             
@@ -173,8 +171,9 @@ async def single_link(_, message):
                 q = await userbot_join(userbot, link)
                 await msg.edit_text(q)
             elif 't.me/c/' in link or 't.me/b/' in link or '/s/' in link or 'tg://openmessage' in link:
-                await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
-                await set_interval(user_id, interval_minutes=45)
+                success = await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
+                if success:
+                    await set_interval(user_id, interval_minutes=45)
             else:
                 await msg.edit_text("Invalid link format.")
         except Exception as e:
@@ -211,7 +210,7 @@ async def batch_link(_, message):
     if freecheck == 1 and FREEMIUM_LIMIT == 0 and user_id not in OWNER_ID:
         await message.reply("Freemium service is currently not available. Upgrade to premium for access.")
         return
-
+    
     # Determine user's limits based on their subscription
     toker = await is_user_verified(user_id)
     if toker:
@@ -312,11 +311,12 @@ async def batch_link(_, message):
                         else:
                             userbot = None
                         msg = await app.send_message(message.chat.id, f"Processing...")
-                        await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
-                        await pin_msg.edit_text(
-                        f"Batch process started ⚡\n__Processing: {i - cs + 1}/{cl}__\n\n**__Powered by Team SPY__**",
-                        reply_markup=keyboard
-                        )
+                        success = await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
+                        if success:
+                            await pin_msg.edit_text(
+                            f"Batch process started ⚡\n__Processing: {i - cs + 1}/{cl}__\n\n**__Powered by Team SPY__**",
+                            reply_markup=keyboard
+                            )
                 except Exception as e:
                     print(f"Error processing link {url}: {e}")
                     continue
@@ -360,11 +360,12 @@ async def batch_link(_, message):
                         # Process links requiring userbot
                         if 't.me/b/' in link or 't.me/c/' in link or 'tg://openmessage' in link:
                             msg = await app.send_message(message.chat.id, f"Processing...")
-                            await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
-                            await pin_msg.edit_text(
-                            f"Batch process started ⚡\n__Processing: {i - cs + 1}/{cl}__\n\n**__Powered by Team SPY__**",
-                            reply_markup=keyboard
-                            )
+                            success = await process_and_upload_link(userbot, user_id, msg.id, link, 0, message)
+                            if success:
+                                await pin_msg.edit_text(
+                                f"Batch process started ⚡\n__Processing: {i - cs + 1}/{cl}__\n\n**__Powered by Team SPY__**",
+                                reply_markup=keyboard
+                                )
                     except Exception as e:
                         print(f"Error processing link {url}: {e}")
                         continue
