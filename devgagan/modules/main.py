@@ -42,6 +42,13 @@ async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, m
             return
         await get_msg(userbot, user_id, msg_id, link, retry_count, message)
         await asyncio.sleep(15)
+    except AttributeError as e:
+        if "'NoneType' object has no attribute 'get_chat'" in str(e):
+            print(f"Error occurred while processing message: {e}")
+            return
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return
     finally:
         pass
 
