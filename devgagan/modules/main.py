@@ -27,10 +27,9 @@ from pyrogram.errors import FloodWait
 from datetime import datetime, timedelta
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import subprocess
+
 async def generate_random_name(length=8):
     return ''.join(random.choices(string.ascii_lowercase, k=length))
-
-
 
 users_loop = {}
 interval_set = {}
@@ -45,8 +44,6 @@ async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, m
         await asyncio.sleep(15)
     finally:
         pass
-
-
 
 # Function to check if the user can proceed
 async def check_interval(user_id, freecheck):
@@ -70,13 +67,16 @@ async def set_interval(user_id, interval_minutes=45):
     now = datetime.now()
     # Set the cooldown interval for the user
     interval_set[user_id] = now + timedelta(seconds=interval_minutes)
-    
 
 @app.on_message(
     filters.regex(r'https?://(?:www\.)?t\.me/[^\s]+|tg://openmessage\?user_id=\w+&message_id=\d+') 
     & filters.private
 )
 async def single_link(_, message):
+    if not message.text.strip():
+        print(f"Skipping empty message: {message.message_id}")
+        return
+
     join = await subscribe(_, message)
     if join == 1:
         return
@@ -91,7 +91,7 @@ async def single_link(_, message):
             "You already have an ongoing process. Please wait for it to finish or cancel it with /cancel."
         )
         return    
-        
+    
     freecheck = await chk_user(message, user_id)
     if freecheck == 1 and FREEMIUM_LIMIT == 0 and user_id not in OWNER_ID:
         await message.reply("Freemium service is currently not available. Upgrade to premium for access.")
@@ -117,7 +117,7 @@ async def single_link(_, message):
         if join == 1:
             users_loop[user_id] = False
             return
-     
+    
         
         msg = await message.reply("Processing...")
         
@@ -181,11 +181,12 @@ async def single_link(_, message):
     finally:
         users_loop[user_id] = False  # Remove user from the loop after processing
 
-# New Update
-
-
 @app.on_message(filters.command("batch") & filters.private)
 async def batch_link(_, message):
+    if not message.text.strip():
+        print(f"Skipping empty message: {message.message_id}")
+        return
+
     join = await subscribe(_, message)
     if join == 1:
         return
@@ -379,7 +380,6 @@ async def batch_link(_, message):
         await app.send_message(message.chat.id, f"Error: {str(e)}")
     finally:
         users_loop.pop(user_id, None)
-    
 
 @app.on_message(filters.command("cancel"))
 async def stop_batch(_, message):
@@ -402,4 +402,3 @@ async def stop_batch(_, message):
             message.chat.id, 
             "No active batch processing is running to cancel."
         )
-         
