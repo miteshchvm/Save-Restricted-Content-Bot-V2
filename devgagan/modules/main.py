@@ -81,7 +81,7 @@ async def set_interval(user_id, interval_minutes=45):
     interval_set[user_id] = now + timedelta(seconds=interval_minutes)
 
 @app.on_message(
-    filters.regex(r'https?://(?:www\.)?t\.me/[^\s]+|tg://openmessage\?user_id=\w+&message_id=\d+') 
+    filters.regex(r'https?://(?:www\.)?t\.me/[^\s]+|tg://openmessage\?user_id=\w+&message_id=\d+')
     & filters.private
 )
 async def single_link(_, message):
@@ -101,7 +101,7 @@ async def single_link(_, message):
         await message.reply(
             "You already have an ongoing process. Please wait for it to finish or cancel it with /cancel."
         )
-        return    
+        return
     
     freecheck = await chk_user(message, user_id)
     if freecheck == 1 and FREEMIUM_LIMIT == 0 and user_id not in OWNER_ID:
@@ -118,7 +118,7 @@ async def single_link(_, message):
     if "tg://openmessage" in message.text:
         link = message.text
     else:
-        link = get_link(message.text) 
+        link = get_link(message.text)
     
     userbot = None
     try:
@@ -161,7 +161,7 @@ async def single_link(_, message):
             try:
                 device = 'Vivo Y20'
                 userbot = Client(":userbot:", api_id=API_ID, api_hash=API_HASH, device_model=device, session_string=session)
-                await userbot.start()                
+                await userbot.start()
             except:
                 users_loop[user_id] = False
                 return await msg.edit_text("Login expired /login again...")
@@ -203,7 +203,7 @@ async def batch_link(_, message):
      
     user_id = message.chat.id
     # Check if a batch process is already running
-    if users_loop.get(user_id, False):  
+    if users_loop.get(user_id, False):
         await app.send_message(
             message.chat.id,
             "You already have a batch process running. Please wait for it to complete before starting a new one."
@@ -401,16 +401,16 @@ async def stop_batch(_, message):
     if user_id in users_loop and users_loop[user_id]:
         users_loop[user_id] = False  # Set the loop status to False
         await app.send_message(
-            message.chat.id, 
+            message.chat.id,
             "Batch processing has been stopped successfully. You can start a new batch now if you want."
         )
     elif user_id in users_loop and not users_loop[user_id]:
         await app.send_message(
-            message.chat.id, 
+            message.chat.id,
             "The batch process was already stopped. No active batch to cancel."
         )
     else:
         await app.send_message(
-            message.chat.id, 
+            message.chat.id,
             "No active batch processing is running to cancel."
         )
